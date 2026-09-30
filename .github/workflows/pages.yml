@@ -43,6 +43,9 @@ jobs:
           git -C "$RUNNER_TEMP/sigil" checkout -q FETCH_HEAD
 
       - name: Stamp realm-sigil (version.json + meta tag)
+        env:
+          # A committed json.py in the checkout must not shadow the stdlib in build.sh's python calls.
+          PYTHONSAFEPATH: "1"
         run: |
           html_arg=()
           [ -f index.html ] && html_arg=(--html index.html)

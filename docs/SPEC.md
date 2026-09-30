@@ -2,7 +2,7 @@
 
 **One line:** a free, browser-only tracker for California Self-Determination Program (SDP) families. Drop in the spending plan and the FMS year-to-date report you already receive; get a year-end forecast by service code, a live what-if proposal calculator (who bills what, hours per week), pace against the plan, and a printable proposal. Nothing leaves the browser.
 
-Origin: a private tool built for one family (one family's plan). This repo is a **fresh, generic, data-driven** rebuild. **Zero personal data may enter this repo**: no real names, UCIs, DOBs, invoice numbers, amounts, or real FMS files. Read the private repo for FORMAT and LOGIC only.
+Origin: a private tool built for one family's plan. This repo is a **fresh, generic, data-driven** rebuild. **Zero personal data may enter this repo**: no real names, UCIs, DOBs, invoice numbers, amounts, or real FMS files. Read the private repo for FORMAT and LOGIC only. The FMS fee amount, rates, and any dollar figure copied from the private plan count as personal data; use $NNN placeholders.
 
 ## Product rules (these are DDS/FMS facts the tool must encode and show)
 1. Budget is authorized **by service code** (e.g. 320, 331, 338, 340, 358). No per-person caps. Money never moves between codes. Under-spend in a code **forfeits** at plan-year end.
@@ -16,14 +16,17 @@ Origin: a private tool built for one family (one family's plan). This repo is a 
 - Persistence: `localStorage` (proposal state, named scenarios, imported data), plus Export/Import JSON. Users can clear everything with one button.
 - Theme: port the "typeset ledger" look from the private page (Fraunces / Instrument Sans / IBM Plex Mono via Google Fonts with system fallbacks; warm paper light, midnight-gold dark via `prefers-color-scheme`; ruled tables; FITS/OVER stamp). SVG favicon. Print CSS. **Accessibility is a requirement:** every input labelled (visible or `aria-label`), keyboard operable, visible focus, WCAG AA contrast in both themes, tables with `<th scope>`, live region for the verdict.
 - Every project with a web presence in JP's world uses **realm-sigil** (`~/Projects/realm-sigil`, static `build.sh`) and registers in `status.realm.watch/checks.json`. Include it if it fits a static site; if it needs a server, document why not.
+  - **Decided (nebula-docs, 2026-09-30): included, deploy-time only.** realm-sigil's static `build.sh` needs no server. It writes `version.json` and injects `<meta name="realm-version">` into `index.html`. `.github/workflows/pages.yml` runs it in the Pages job against realm-sigil pinned to a commit SHA, so the stamp exists only in the deployed copy and the repo stays build-free (a `file://` copy simply has no stamp). Realm: `tarot`. Status registration: a `version` check on `https://jphein.github.io/sdp-planner/version.json` in `status.realm.watch/checks.json`, applied by the lead once Pages is live.
 
 ## Shared interface (Morpheus provides, Luna consumes — agree here, not in DMs)
 ```js
 window.SDP = {
   parsers: {
     detect(workbook) -> 'ace-plan' | 'ace-report' | null,      // by sheet names / header cells
-    parse(workbook)  -> { kind, data }                           // dispatch
-    ace: { plan(wb) -> Plan, report(wb) -> Report }
+    parse(workbook)  -> { kind, fms, data }                      // dispatch; fms = module id
+    register(mod), list() -> [{id, label}],                      // pluggable registry (docs/ADDING-AN-FMS.md)
+    fromArrayBuffer(buf, XLSX) -> parse(...)                     // SheetJS default read options (no cellDates)
+    ace: { id:'ace', label, detect(wb) -> 'plan'|'report'|null, plan(wb) -> Plan, report(wb) -> Report }
   },
   model: {
     weeksFrom(ym, yearEnd), monthsFrom(ym, yearEnd),
@@ -50,4 +53,4 @@ ACE formats (from the private repo, structure only): plan workbook sheet `Sheet2
 - **oracle** (end) — read-only: no personal data (grep for the private repo's names/UCI), license, a11y checklist, file:// works, Pages live.
 
 ## Definition of done (per CLAUDE.md "Definition of done")
-Changed / Checked / Evidence / Not verified in every report. Green: `node --test` passes; `scripts/cdp-smoke.mjs` passes on the demo dataset AND on a synthetic ACE fixture; page renders from `file://` and from the Pages URL; Oracle finds zero personal data. Merge order: morpheus → lucid fixtures → luna → nebula, rebase-next-on-demand, squash, one PR per lane.
+Changed / Checked / Evidence / Not verified in every report. Green: `node --test tests/unit/*.test.js` passes (Node 24 rejects a bare directory argument); `scripts/cdp-smoke.mjs` passes on the demo dataset AND on a synthetic ACE fixture; page renders from `file://` and from the Pages URL; Oracle finds zero personal data. Merge order: morpheus → lucid fixtures → luna → nebula, rebase-next-on-demand, squash, one PR per lane.

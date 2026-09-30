@@ -1,0 +1,65 @@
+name: pages
+# Publishes the repository root as a static site to GitHub Pages on every push to main.
+# The repo itself has no build step; the only thing added at deploy time is the realm-sigil
+# stamp (version.json + <meta name="realm-version"> in index.html), written into the
+# runner's checkout and never committed.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; let an in-flight deployment finish rather than cancel it.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  # realm-sigil (public) pinned to a commit so a moved branch cannot change what runs here.
+  SIGIL_REPO: https://github.com/jphein/sigil.realm.watch.git
+  SIGIL_SHA: 135bc90045f24e60dc85494d66844e3264cd46ac
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # Actions pinned to commit SHAs (tag noted beside each).
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Fetch realm-sigil at the pinned commit
+        run: |
+          git init -q "$RUNNER_TEMP/sigil"
+          git -C "$RUNNER_TEMP/sigil" fetch -q --depth 1 "$SIGIL_REPO" "$SIGIL_SHA"
+          git -C "$RUNNER_TEMP/sigil" checkout -q FETCH_HEAD
+
+      - name: Stamp realm-sigil (version.json + meta tag)
+        run: |
+          html_arg=()
+          [ -f index.html ] && html_arg=(--html index.html)
+          bash "$RUNNER_TEMP/sigil/static/build.sh" \
+            --name sdp-planner \
+            --description "Browser-only SDP spending-plan tracker" \
+            --realm tarot \
+            --repo "https://github.com/${GITHUB_REPOSITORY}" \
+            "${html_arg[@]}"
+          python3 -m json.tool version.json
+
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d   # v6.0.0
+
+      # upload-pages-artifact already excludes .git and .github.
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9   # v5.0.0
+        with:
+          path: .
+
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346   # v5.0.1

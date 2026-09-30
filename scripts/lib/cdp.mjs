@@ -12,7 +12,10 @@ import { pathToFileURL } from 'node:url';
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
+// A page to test: an http(s):// URL is used as-is (e.g. the live GitHub Pages copy); anything
+// else is a local directory (→ its index.html) or .html file, opened over file://.
 export function pageUrl(rootOrFile) {
+  if (/^https?:\/\//i.test(rootOrFile)) return new URL(rootOrFile).href;
   const p = resolve(rootOrFile);
   return pathToFileURL(p.endsWith('.html') ? p : join(p, 'index.html')).href;
 }
@@ -89,6 +92,9 @@ export async function launch({ chrome = process.env.CHROME || 'google-chrome', w
 }
 
 // Tiny check runner: prints one line per check, returns the counts.
+// url with one query parameter set, keeping any query/hash already on it.
+export function withParam(url, key, value) { const u = new URL(url); u.searchParams.set(key, value); return u.href; }
+
 export function runner(label) {
   const results = [];
   async function check(name, fn) {

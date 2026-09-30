@@ -17,7 +17,18 @@ per check, and a failing line names the element (selector path) and the values i
 npm run smoke                                   # against ./index.html
 node scripts/cdp-smoke.mjs --root ../other-tree  # or any directory that has an index.html
 node scripts/a11y-check.mjs --verbose            # also lists exempt elements, token pairs, unreached tab stops
+node scripts/cdp-smoke.mjs https://jphein.github.io/sdp-planner/   # the live GitHub Pages copy
+node scripts/a11y-check.mjs https://jphein.github.io/sdp-planner/
 ```
+
+**What the argument means.** An argument that starts with `http://` or `https://` is loaded from
+that URL; this is how to check a deployed copy. Anything else is a local directory (its
+`index.html` opens over `file://`) or a path to an `.html` file, and with no argument the script
+tests this checkout. In URL mode the fixtures are still read from this checkout's
+`tests/fixtures/` and handed to the page's file input, the same way a user would pick them. So a
+URL run checks the deployed page with this checkout's fixtures and `expected.json`: run it from
+the commit that was deployed. A wrong URL fails loudly (a 404 page fails 16 of 17 smoke checks,
+exit 1).
 
 Each run uses a throwaway Chrome profile (in `$TMPDIR`, deleted afterwards), and Chrome picks its
 own debugging port, so parallel runs don't collide.

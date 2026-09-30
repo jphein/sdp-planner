@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Accessibility check over CDP (headless Chrome, no dependencies).
 //
-//   node scripts/a11y-check.mjs [--root DIR | path/to/index.html]
+//   node scripts/a11y-check.mjs [--root DIR | path/to/index.html | https://host/path/]
 //
 // Runs on the onboarding view and on the app in demo mode (?demo=1), in BOTH light and dark
 // (prefers-color-scheme emulation), and asserts:
@@ -20,7 +20,7 @@
 // are exempt (WCAG 1.4.3 "incidental"); they are listed, not failed.
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { launch, pageUrl, runner, assert } from './lib/cdp.mjs';
+import { launch, pageUrl, withParam, runner, assert } from './lib/cdp.mjs';
 
 const here = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -176,7 +176,7 @@ async function tab(shift = false) {
 }
 
 try {
-  for (const [view, url] of [['onboarding', base], ['app', base + '?demo=1']]) {
+  for (const [view, url] of [['onboarding', base], ['app', withParam(base, 'demo', '1')]]) {
     for (const theme of ['light', 'dark']) {
       const tag = `${view}/${theme}`;
       await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: theme }] });

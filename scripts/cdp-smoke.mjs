@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // End-to-end smoke test: drive index.html in headless Chrome over CDP.
 //
-//   node scripts/cdp-smoke.mjs [--root DIR | path/to/index.html]
+//   node scripts/cdp-smoke.mjs [--root DIR | path/to/index.html | https://host/path/]
+//   (with a URL, the page comes from there; the fixtures are still read from this checkout's disk)
 //
 // It checks the parsers against tests/fixtures (the same workbooks a user would drop in) and the
 // calculator in demo mode and with the fixtures loaded: rows render, hr/wk → hr/yr and the stamp,

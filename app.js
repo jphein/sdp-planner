@@ -93,7 +93,10 @@
     var ok = store(KEY, { app: 'sdp-planner', v: 1, saved: new Date().toISOString(), dataset: X.ds, lines: lines, auth: auth });
     $('saveStatus').textContent = ok ? 'saved in this browser · ' + new Date().toLocaleTimeString() : 'browser storage unavailable — use Export';
   }
-  function snap() { hist.push(JSON.stringify({ lines: lines, auth: auth })); if (hist.length > 40) hist.shift(); $('undoBtn').disabled = false; }
+  function snap() { // dedupe: a focus snapshot followed by a change snapshot of the same state is one undo step
+    var cur = JSON.stringify({ lines: lines, auth: auth }); if (hist[hist.length - 1] === cur) return;
+    hist.push(cur); if (hist.length > 40) hist.shift(); $('undoBtn').disabled = false;
+  }
   function undo() { if (!hist.length) return; var o = JSON.parse(hist.pop()); lines = normalize(o.lines); auth = o.auth; render(); save(); $('undoBtn').disabled = !hist.length; $('saveStatus').textContent = 'undone'; }
 
   /* ------------------------------------------------------------------ onboarding */
@@ -386,6 +389,7 @@
   });
   $('calcBody').addEventListener('change', function (e) {
     var t = e.target, L = lines[+t.dataset.i], k = t.dataset.k; if (!L) return;
+    if (t.tagName === 'SELECT') snap(); // changes that arrive without focus (AT, autofill, scripts) still get an undo step
     if (k === 'convrate') {
       var cr = num(t.value); if (!cr) return;
       snap(); var amt0 = yr(L); L.fixed = false; L.rate = cr; L.hours = amt0 / cr; if (!L.service || L.service === 'fixed') L.service = 'hourly';
@@ -516,7 +520,7 @@
   });
 
   /* ------------------------------------------------------------------ automation hook (read-only snapshot) */
-  SDP.app = { state: function () { return X ? clone({ lines: lines, auth: auth }) : null; } };
+  SDP.app = { state: function () { return X ? clone({ lines: lines, auth: auth, yearEnd: X.yearEnd }) : null; } };
 
   /* ------------------------------------------------------------------ boot */
   var saved = fetchKey(KEY);

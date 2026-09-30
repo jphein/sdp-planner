@@ -1,8 +1,8 @@
 /* sdp-planner — "typeset ledger" theme. Warm paper (light) / midnight-gold (dark). */
 :root{
-  --paper:#f3eee4;--paper-2:#ebe4d5;--paper-3:#e2d9c6;--ink:#1a1814;--ink-2:#57524a;--ink-3:#6b665c;
+  --paper:#f3eee4;--paper-2:#ebe4d5;--paper-3:#e2d9c6;--ink:#1a1814;--ink-2:#57524a;--ink-3:#625e55;
   --rule:#cfc6b2;--rule-strong:#1a1814;--accent:#1c2c4c;--accent-ink:#f3eee4;--focus:#1c4fa8;
-  --ok:#28603f;--ok-soft:#dbe8dc;--warn:#8a5410;--warn-soft:#f2e3c6;--bad:#9a2a2f;--bad-soft:#f0d5d3;
+  --ok:#28603f;--ok-soft:#dbe8dc;--warn:#875210;--warn-soft:#f2e3c6;--bad:#9a2a2f;--bad-soft:#f0d5d3;
   --grain:.055;
   --display:"Fraunces",Georgia,"Times New Roman",serif;
   --ui:"Instrument Sans","Helvetica Neue",Helvetica,Arial,sans-serif;

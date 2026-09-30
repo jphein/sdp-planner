@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="A free, browser-only tracker for California Self-Determination Program families: year-end forecast by service code, what-if proposal calculator, pace against the plan. Nothing leaves your browser.">
+<title>SDP Planner</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23f3eee4'/%3E%3Crect x='3' y='3' width='26' height='26' rx='2' fill='none' stroke='%231a1814' stroke-width='1.5'/%3E%3Cpath d='M7 11h18M7 16h18M7 21h12' stroke='%231a1814' stroke-width='1.2' stroke-linecap='round'/%3E%3Ccircle cx='24' cy='22' r='4' fill='%232e6b48'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="page">
+
+<header class="masthead">
+  <div class="ghost" id="ghost" aria-hidden="true">SDP</div>
+  <div class="kicker" id="kicker"><span>Self-Determination Program</span><span>Plan tracker</span><span>Runs in your browser</span></div>
+  <h1>Self-Determination <em>Spending Plan</em></h1>
+  <p class="meta" id="meta">Drop in the spending plan and the FMS year-to-date report you already receive. Nothing is uploaded anywhere.</p>
+</header>
+
+<main id="main">
+
+<!-- ================= onboarding ================= -->
+<section id="onboard" class="onboard" aria-labelledby="obH" style="--i:0">
+  <div class="sh"><span class="no" aria-hidden="true">§ 00</span><h2 id="obH">Start with your two files</h2></div>
+  <p class="intro">You need the <b>spending plan</b> workbook (<span class="mono">.xlsx</span>) and, if you have it, the <b>FMS year-to-date report</b> (<span class="mono">.xlsx</span>). They are read here, in this tab, and never sent anywhere. No files handy? Try the demo — it uses made-up people and amounts.</p>
+  <div class="drop" id="drop" tabindex="0" role="button" aria-describedby="dropHelp">
+    <div class="drop-in">
+      <div class="drop-big" aria-hidden="true">⤓</div>
+      <div class="drop-t">Drop your <b>.xlsx</b> files here</div>
+      <div class="drop-s" id="dropHelp">or press Enter to choose files · plan and report, one or both at once</div>
+    </div>
+  </div>
+  <input id="fileIn" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple class="sr-only" aria-label="Choose spending plan and FMS report files">
+  <ul class="found" id="found" aria-live="polite"></ul>
+  <div class="actions">
+    <button class="btn primary" id="openBtn" type="button" disabled>Open my plan</button>
+    <button class="btn" id="demoBtn" type="button">Try the demo</button>
+    <button class="btn" id="backBtn" type="button" hidden>Back to my plan</button>
+    <span class="dim" id="obStatus" role="status"></span>
+  </div>
+</section>
+
+<!-- ================= app ================= -->
+<div id="app" hidden>
+
+<section class="hero" aria-labelledby="heroLabel" style="--i:0">
+  <div class="lede">
+    <div class="stamp" id="stamp" aria-hidden="true">Fits</div>
+    <h2 class="label" id="heroLabel">Room left · hr/wk from today to <span id="yearEndA"></span></h2>
+    <div class="figs" id="figs"></div>
+    <p class="cap" id="heroCap"></p>
+  </div>
+  <dl class="totals">
+    <div class="row"><dt class="k">Approved plan</dt><dd class="v" id="tPlan"></dd></div>
+    <div class="row"><dt class="k">Billed so far <span class="dim">(by service date; paid + pending)</span></dt><dd class="v" id="tCommitted"></dd></div>
+    <div class="row"><dt class="k">Available today</dt><dd class="v" id="tAvail"></dd></div>
+    <div class="row"><dt class="k">Full-year forecast <span class="dim">(this proposal)</span></dt><dd class="v" id="tForecast"></dd></div>
+    <div class="row strong"><dt class="k">Unused on <span id="yearEndB"></span> if it holds</dt><dd class="v" id="tUnused"></dd></div>
+  </dl>
+</section>
+
+<section id="calc" aria-labelledby="calcH" style="--i:1">
+  <div class="sh"><span class="no" aria-hidden="true">§ 01</span><h2 id="calcH">Proposal — who bills what this year</h2></div>
+  <p class="intro">One line per provider. Every field is yours: name, code, service, rate, <b>start month</b>, hours per week, per month or per year, and dollars; they stay in sync (hours/wk × weeks from the start month to year end = hours/yr). <b>Billed so far</b> is what has actually posted (<span class="chip ahead">amber</span> = running ahead of that line's pace) and never changes the proposal. <b>⤓</b> fills a line to exactly what is left in its code, <b>✕</b> removes it, <b>Undo</b> steps back, and you can save named proposals to compare. Budget lives <b>by service code</b>: money never moves between codes.</p>
+  <div class="scroll" tabindex="0" role="region" aria-labelledby="calcH"><table class="ledger calc-table">
+    <caption class="sr-only">Proposal lines. Edit any cell; totals update below.</caption>
+    <thead><tr><th scope="col">Provider</th><th scope="col">Code</th><th scope="col">Service</th><th scope="col" class="num">Rate</th><th scope="col" class="num">Billed so far</th><th scope="col" title="first month of service this plan year">Start</th><th scope="col" class="num">Hr / wk</th><th scope="col" class="num">Hr / mo</th><th scope="col" class="num">Hr / yr</th><th scope="col" class="num">$ / yr</th><th scope="col" class="num">$ / mo</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+    <tbody id="calcBody"></tbody>
+  </table></div>
+  <div class="actions">
+    <button class="btn primary" id="addBtn" type="button">＋ Add a line</button>
+    <button class="btn" id="undoBtn" type="button" disabled>↶ Undo</button>
+    <button class="btn" id="resetBtn" type="button">Reset to plan</button>
+    <span class="brk"></span>
+    <span class="lbl" id="scnLbl">Scenarios</span>
+    <select class="w" id="scnSel" aria-label="Saved proposals"><option value="">— saved proposals —</option></select>
+    <input class="w t" id="scnName" placeholder="name this proposal" aria-label="Name for the saved proposal">
+    <button class="btn" id="scnSave" type="button">Save as</button>
+    <button class="btn" id="scnDel" type="button">Delete</button>
+    <span class="brk"></span>
+    <button class="btn" id="exportBtn" type="button">Export .json</button>
+    <button class="btn" id="importBtn" type="button">Import .json</button>
+    <input id="importFile" type="file" accept="application/json,.json" class="sr-only" tabindex="-1" aria-label="Import a saved .json file">
+    <button class="btn" id="printBtn" type="button">Print proposal</button>
+    <span id="saveStatus" role="status"></span>
+  </div>
+
+  <div class="strip" id="budgets" role="group" aria-labelledby="budH"></div>
+  <div class="pots" id="results"></div>
+  <div class="verdict" id="verdict" aria-live="polite" aria-atomic="true"><div class="big" id="vBig" aria-hidden="true"></div><div class="txt" id="vTxt" aria-hidden="true"></div><span class="sr-only" id="vLive"></span></div>
+</section>
+
+<section aria-labelledby="paceH" style="--i:2">
+  <div class="sh"><span class="no" aria-hidden="true">§ 02</span><h2 id="paceH">Actuals by service code — pace</h2></div>
+  <p class="intro" id="paceIntro"></p>
+  <div class="scroll" tabindex="0" role="region" aria-labelledby="paceH"><table class="ledger"><thead><tr><th scope="col">Code</th><th scope="col">What</th><th scope="col" class="num">Budget</th><th scope="col" class="num">Billed</th><th scope="col" class="num">Available</th><th scope="col" class="num">% used</th><th scope="col" class="num">vs even pace</th><th scope="col">Progress</th></tr></thead><tbody id="codeBody"></tbody></table></div>
+</section>
+
+<section aria-labelledby="pmH" style="--i:3">
+  <div class="sh"><span class="no" aria-hidden="true">§ 03</span><h2 id="pmH">Provider × service month</h2></div>
+  <div class="scroll" tabindex="0" role="region" aria-labelledby="pmH"><table class="ledger"><thead id="pmHead"></thead><tbody id="pmBody"></tbody></table></div>
+</section>
+
+<section aria-labelledby="plH" style="--i:4">
+  <div class="sh"><span class="no" aria-hidden="true">§ 04</span><h2 id="plH">Approved plan lines</h2></div>
+  <div class="scroll" tabindex="0" role="region" aria-labelledby="plH"><table class="ledger"><thead><tr><th scope="col">Code</th><th scope="col">Line</th><th scope="col">Provider(s)</th><th scope="col" class="num">Units</th><th scope="col" class="num">Rate</th><th scope="col" class="num">Yearly</th></tr></thead><tbody id="planBody"></tbody></table></div>
+</section>
+
+<section aria-labelledby="invH" style="--i:5">
+  <div class="sh"><span class="no" aria-hidden="true">§ 05</span><h2 id="invH">Invoices this year, by service date</h2></div>
+  <p class="intro">The FMS report dates each invoice by the <b>month it paid for</b>, not the day it was paid: a monthly invoice shows under the 1st of the month served, about a month later.</p>
+  <div class="scroll" tabindex="0" role="region" aria-labelledby="invH"><table class="ledger"><thead><tr><th scope="col">Service date</th><th scope="col">Provider</th><th scope="col">Code</th><th scope="col">Description</th><th scope="col" class="num">Amount</th><th scope="col">Status</th></tr></thead><tbody id="invBody"></tbody></table></div>
+</section>
+
+<div class="actions data-actions">
+  <button class="btn" id="swapBtn" type="button">Load different files</button>
+  <button class="btn danger" id="clearBtn" type="button">Clear my data</button>
+</div>
+
+</div>
+</main>
+
+<footer>
+  <b>Not financial or legal advice.</b> This is a planning aid. Your regional center certifies the spending plan and your FMS pays the invoices; their records win.<br>
+  <b>Nothing leaves your browser.</b> Your files are read in this tab; your proposal is saved only in this browser (Export for a portable copy, <i>Clear my data</i> to erase it). No server, no analytics.<br>
+  <span id="srcLine"></span>
+</footer>
+</div>
+
+<!-- classic scripts, no modules: works from file:// and GitHub Pages -->
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="model.js"></script>
+<script src="parsers/ace.js"></script>
+<script src="parsers/index.js"></script>
+<script src="demo/demo-data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

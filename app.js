@@ -4,103 +4,15 @@
 (function () {
   'use strict';
 
-  /* ------------------------------------------------------------------------------------------
-   * Fallback stub — used only for the pieces of window.SDP that are not loaded (model.js etc.
-   * still being built in another lane). Synthetic data only: obviously fake people and amounts.
-   * ---------------------------------------------------------------------------------------- */
-  var STUB = (function () {
-    function pad(n) { return (n < 10 ? '0' : '') + n; }
-    function ymParts(ym) { var p = String(ym).split('-'); return [+p[0], +p[1]]; }
-    function weeksFrom(ym, yearEnd) {
-      var p = ymParts(ym), s = new Date(p[0], p[1] - 1, 1), e = new Date(yearEnd + 'T00:00:00');
-      return Math.max(1, ((e - s) / 864e5 + 1) / 7);
-    }
-    function monthsFrom(ym, yearEnd) {
-      var p = ymParts(ym), e = ymParts(yearEnd.slice(0, 7));
-      return Math.max(1, (e[0] - p[0]) * 12 + (e[1] - p[1]) + 1);
-    }
-    function isHourly(l) { return /hour|hr/i.test(l.unit || '') && l.rate > 0; }
-    function buildProposal(plan, report) {
-      var start = plan.planYear.start.slice(0, 7), out = [];
-      plan.lines.forEach(function (l, i) {
-        var who = (l.providers && l.providers.length) ? l.providers.join(' or ') : l.description;
-        if (isHourly(l)) out.push({ id: 'p' + i, provider: who, code: String(l.code), service: l.service || l.description, rate: l.rate, hours: l.unitsPerYear, start: start, fixed: false, note: 'plan line: ' + l.description });
-        else out.push({ id: 'p' + i, provider: who, code: String(l.code), service: 'fixed', rate: l.yearly, hours: 1, start: start, fixed: true, note: 'plan line: ' + l.description });
-      });
-      return out;
-    }
-    function forecast(lines, auth) {
-      var byCode = {}, total = 0;
-      Object.keys(auth).forEach(function (c) { byCode[c] = { proposal: 0, headroom: auth[c] }; });
-      lines.forEach(function (L) {
-        var c = String(L.code), y = L.fixed ? L.rate : L.hours * L.rate;
-        if (!byCode[c]) byCode[c] = { proposal: 0, headroom: 0 };
-        byCode[c].proposal += y; total += y;
-      });
-      Object.keys(byCode).forEach(function (c) { byCode[c].headroom = (auth[c] || 0) - byCode[c].proposal; });
-      var overCodes = Object.keys(byCode).filter(function (c) { return byCode[c].headroom < -0.005; });
-      return { byCode: byCode, total: total, fits: !overCodes.length, overCodes: overCodes };
-    }
-    function pace(report, plan, asOf) {
-      var s = ymParts(plan.planYear.start.slice(0, 7)), a = ymParts((asOf || report.asOf).slice(0, 7));
-      var months = Math.max(0, Math.min(12, (a[0] - s[0]) * 12 + (a[1] - s[1]) + 1));
-      var byCode = {};
-      Object.keys(plan.codes).forEach(function (c) {
-        var r = (report.byCode && report.byCode[c]) || { spent: 0, alloc: 0 };
-        var auth = plan.codes[c].auth, com = r.spent + r.alloc, exp = auth * months / 12;
-        byCode[c] = { spent: r.spent, alloc: r.alloc, available: auth - com, expected: exp, diff: com - exp, pct: auth ? com / auth * 100 : 0 };
-      });
-      return { byCode: byCode, monthsElapsed: months };
-    }
-    function demo() {
-      // A plan year that started 5 months ago, so the demo always shows a live, mid-year picture
-      // (SDP plan years start on the participant's own date, not a fixed month).
-      var t = new Date(), s0 = new Date(t.getFullYear(), t.getMonth() - 5, 1), e0 = new Date(s0.getFullYear() + 1, s0.getMonth(), 0);
-      var iso = function (d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
-      var start = iso(s0), end = iso(e0), y = s0.getFullYear();
-      var codes = {
-        '320': { name: 'Personal assistance + ILS', auth: 41500 },
-        '331': { name: 'Community integration supports', auth: 24000 },
-        '338': { name: 'Participant-directed goods & services', auth: 2400 },
-        '358': { name: 'Individual training & education', auth: 3600 }
-      };
-      var lines = [
-        { code: '320', description: 'Personal assistance', service: 'PA', providers: ['Robin Sample'], unitsPerYear: 700, unit: 'hour', rate: 36, yearly: 25200 },
-        { code: '320', description: 'Independent living skills', service: 'ILS', providers: ['Casey Example'], unitsPerYear: 300, unit: 'hour', rate: 50, yearly: 15000 },
-        { code: '331', description: 'Community integration', service: 'TDS', providers: ['Jordan Placeholder'], unitsPerYear: 380, unit: 'hour', rate: 40, yearly: 15200 },
-        { code: '331', description: 'Community integration', service: 'TDS', providers: ['Open slot'], unitsPerYear: 150, unit: 'hour', rate: 40, yearly: 6000 },
-        { code: '338', description: 'Gym membership', service: 'fixed', providers: ['Demo Fitness Co.'], unitsPerYear: 12, unit: 'month', rate: 200, yearly: 2400 },
-        { code: '358', description: 'Art class', service: 'fixed', providers: ['Imaginary Arts Studio'], unitsPerYear: 12, unit: 'month', rate: 300, yearly: 3600 }
-      ];
-      var plan = { planYear: { start: start, end: end }, participant: { name: 'Demo Participant' }, coordinator: 'Demo Coordinator',
-        fms: { name: 'Example FMS', model: 'co-employer' }, codes: codes, lines: lines, total: 71500 };
-      // postings: service months fully elapsed, lagging ~1 month
-      var rows = [], sy = y, sm = s0.getMonth() + 1, now = new Date(t.getFullYear(), t.getMonth(), 1);
-      var rates = [['Robin Sample', '320', 'PA', 58, 36], ['Casey Example', '320', 'ILS', 24, 50], ['Jordan Placeholder', '331', 'TDS', 33, 40]];
-      for (var k = 0; k < 12; k++) {
-        var mdate = new Date(sy, sm - 1 + k, 1); if (mdate >= new Date(now.getFullYear(), now.getMonth() - 1, 1)) break;
-        var ds = pad(mdate.getMonth() + 1) + '/01/' + mdate.getFullYear();
-        rates.forEach(function (r, j) { var amt = Math.round(r[3] * (0.9 + 0.07 * ((k + j) % 3)) * r[4] * 100) / 100; rows.push({ date: ds, type: 'Invoice', provider: r[0], code: r[1], description: r[2] + ' services', spent: k < 1 ? amt : 0, alloc: k < 1 ? 0 : amt }); });
-        rows.push({ date: ds, type: 'Invoice', provider: 'Demo Fitness Co.', code: '338', description: 'Monthly membership', spent: 200, alloc: 0 });
-      }
-      var byCode = {}, byProvider = {};
-      rows.forEach(function (r) { var b = byCode[r.code] || (byCode[r.code] = { spent: 0, alloc: 0, available: 0 }); b.spent += r.spent; b.alloc += r.alloc; byProvider[r.provider] = (byProvider[r.provider] || 0) + r.spent + r.alloc; });
-      Object.keys(codes).forEach(function (c) { var b = byCode[c] || (byCode[c] = { spent: 0, alloc: 0 }); b.available = codes[c].auth - b.spent - b.alloc; });
-      var asOf = t.getFullYear() + '-' + pad(t.getMonth() + 1) + '-' + pad(Math.min(28, t.getDate()));
-      return { plan: plan, report: { asOf: asOf, rows: rows, byCode: byCode, byProvider: byProvider } };
-    }
-    return {
-      model: { weeksFrom: weeksFrom, monthsFrom: monthsFrom, buildProposal: buildProposal, forecast: forecast, pace: pace },
-      demo: demo(),
-      parsers: { detect: function () { return null; }, parse: function () { return { kind: null, data: null }; } }
-    };
-  })();
+  var SDP = window.SDP || {}, M = SDP.model;
+  var missing = ['model', 'parsers', 'demo'].filter(function (k) { return !SDP[k]; });
+  if (missing.length) { // a file failed to load (e.g. a partial copy): say so instead of a blank page
+    var ob = document.getElementById('obStatus');
+    if (ob) ob.textContent = 'Some app files did not load (' + missing.join(', ') + '). Keep index.html next to model.js, parsers/, demo/ and vendor/.';
+    ['demoBtn', 'openBtn'].forEach(function (id) { var b = document.getElementById(id); if (b) b.disabled = true; });
+    return;
+  }
 
-  var usingStub = [];
-  if (!window.SDP) window.SDP = {};
-  ['model', 'demo', 'parsers'].forEach(function (k) { if (!window.SDP[k]) { window.SDP[k] = STUB[k]; usingStub.push(k); } });
-  if (usingStub.length && window.console) console.info('[sdp-planner] using built-in stub for: ' + usingStub.join(', '));
-  var SDP = window.SDP, M = SDP.model;
 
   /* ------------------------------------------------------------------ helpers */
   var $ = function (id) { return document.getElementById(id); };
@@ -166,7 +78,7 @@
     ls.forEach(function (L, i) {
       L.code = String(L.code); if (!L.id) L.id = 'l' + Date.now() + i;
       if (!L.start || X.months.indexOf(L.start) < 0) L.start = X.startYm;
-      if (L.fixed) { L.service = 'fixed'; L.hours = 1; }
+      if (L.fixed) L.hours = 1;
       L.rate = +L.rate || 0; L.hours = +L.hours || 0;
     });
     return ls;
@@ -213,16 +125,15 @@
       var r = new FileReader();
       r.onload = function () {
         try {
-          var wb = window.XLSX.read(new Uint8Array(r.result), { type: 'array', cellDates: false });
-          var kind = SDP.parsers.detect(wb);
-          if (!kind) { foundItem(f.name, null, false); return; }
-          var res = SDP.parsers.parse(wb);
+          var res = SDP.parsers.fromArrayBuffer ? SDP.parsers.fromArrayBuffer(r.result)
+            : SDP.parsers.parse(window.XLSX.read(new Uint8Array(r.result), { type: 'array' }));
+          var kind = res && res.kind;
           if (!res || !res.data) throw new Error('empty parse');
           var kk = res.kind || kind, role = roleOf(kk);
           if (!role) { foundItem(f.name, null, false); return; }
           pending[role] = { data: res.data, name: f.name, kind: kk };
           foundItem(f.name, kk, true);
-        } catch (err) { foundItem(f.name, null, false, '✕ could not read: ' + (err && err.message || err)); }
+        } catch (err) { var em = String(err && err.message || err); foundItem(f.name, null, false, /Unrecognized/i.test(em) ? '✕ not a spending plan or FMS report this app can read' : '✕ could not read: ' + em.slice(0, 80)); }
         updateOpen();
       };
       r.onerror = function () { foundItem(f.name, null, false, '✕ could not open'); };
@@ -333,7 +244,7 @@
   }
   function sel(i, k, val, opts, cls, label) {
     return '<select class="w' + (cls ? ' ' + cls : '') + '" data-i="' + i + '" data-k="' + k + '" aria-label="' + esc(label) + '">' + opts.map(function (o) {
-      var lab = k === 'code' ? 'SC-' + o : k === 'start' ? ml(o) : o;
+      var lab = k === 'c' ? 'SC-' + o : k === 'st' ? ml(o) : o;
       return '<option value="' + esc(o) + '"' + (String(val) === String(o) ? ' selected' : '') + '>' + esc(lab) + '</option>';
     }).join('') + '</select>';
   }
@@ -344,21 +255,23 @@
     lines.forEach(function (L, i) {
       var tr = document.createElement('tr'), dol = yr(L), isNew = !X.defById[L.id], wk = weeksFrom(L.start), mo = monthsFrom(L.start);
       var who = L.provider ? '“' + L.provider + '”' : 'line ' + (i + 1);
-      var nameCell = '<input class="w t" data-i="' + i + '" data-k="provider" value="' + esc(L.provider) + '" title="' + esc(L.provider) + '" aria-label="Provider name, line ' + (i + 1) + '">'
+      var nameCell = '<input class="w t" data-i="' + i + '" data-k="t" value="' + esc(L.provider) + '" title="' + esc(L.provider) + '" aria-label="Provider name, line ' + (i + 1) + '">'
         + (isNew ? '<span class="tag">proposed</span>' : '')
         + (L.note ? '<span class="info" tabindex="0" role="img" title="' + esc(L.note) + '" aria-label="Note: ' + esc(L.note) + '">i</span>' : '');
-      var codeCell = sel(i, 'code', L.code, X.codes.indexOf(L.code) < 0 ? X.codes.concat([L.code]) : X.codes, '', 'Service code for ' + who);
-      var svcCell = sel(i, 'service', L.fixed ? 'fixed' : L.service, svcs.indexOf(L.service) < 0 && !L.fixed ? [L.service].concat(svcs) : svcs, '', 'Service type for ' + who);
+      var codeCell = sel(i, 'c', L.code, X.codes.indexOf(L.code) < 0 ? X.codes.concat([L.code]) : X.codes, '', 'Service code for ' + who);
+      var svcCell = sel(i, 'svc', L.fixed ? 'fixed' : L.service, svcs.indexOf(L.service) < 0 && !L.fixed ? [L.service].concat(svcs) : svcs, '', 'Service type for ' + who);
       var def = X.defById[L.id];
-      var rateCell = L.fixed ? '<span class="dim mono" title="approved plan amount for this line">' + (def && def.fixed ? 'plan ' + fmt(def.rate) : '—') + '</span>'
+      var pl = L.planLine != null && X.plan.lines ? X.plan.lines[L.planLine] : null, perTime = !!(pl && /^(week|wk|day)/i.test(pl.unit || ''));
+      var rateCell = L.fixed && perTime ? '<div class="pair"><input class="w r" type="number" step="0.01" min="0" data-i="' + i + '" data-k="convrate" placeholder="$/hr" title="This plan line is budgeted per ' + esc(pl.unit) + ', not per hour. Enter the hourly rate from your plan to plan it in hours." aria-label="Hourly rate for ' + esc(who) + ' (converts this per-' + esc(pl.unit) + ' line to hours)"><span class="u" aria-hidden="true">/hr</span></div>'
+        : L.fixed ? '<span class="dim mono" title="approved plan amount for this line">' + (def && def.fixed ? 'plan ' + fmt(def.rate) : '—') + '</span>'
         : '<div class="pair"><input class="w r" type="number" step="0.01" min="0" data-i="' + i + '" data-k="rate" value="' + (+L.rate).toFixed(2) + '" aria-label="Hourly rate for ' + esc(who) + '"><span class="u" aria-hidden="true">/hr</span></div>';
       var dash = '<span class="dim mono" aria-label="not applicable">—</span>';
       var wkCell = L.fixed ? dash : '<input class="w h" type="number" step="0.25" min="0" data-i="' + i + '" data-k="wk" value="' + (L.hours / wk).toFixed(2) + '" title="over ' + wk.toFixed(1) + ' weeks from ' + ml(L.start) + '" aria-label="Hours per week for ' + esc(who) + '">';
       var moCell = L.fixed ? dash : '<input class="w h" type="number" step="0.5" min="0" data-i="' + i + '" data-k="mo" value="' + (L.hours / mo).toFixed(1) + '" title="over ' + mo + ' months from ' + ml(L.start) + '" aria-label="Hours per month for ' + esc(who) + '">';
       var hrsCell = L.fixed ? dash : '<input class="w h" type="number" step="0.5" min="0" data-i="' + i + '" data-k="hrs" value="' + (+L.hours).toFixed(1) + '" aria-label="Hours per year for ' + esc(who) + '">';
-      var dolCell = '<input class="w d" type="text" inputmode="decimal" data-i="' + i + '" data-k="' + (L.fixed ? 'dolfixed' : 'dol') + '" value="' + money(dol) + '" aria-label="Dollars per year for ' + esc(who) + '">';
+      var dolCell = '<input class="w d" type="text" inputmode="decimal" data-i="' + i + '" data-k="dol" value="' + money(dol) + '" aria-label="Dollars per year for ' + esc(who) + '">';
       tr.innerHTML = '<td class="name">' + nameCell + '</td><td>' + codeCell + '</td><td>' + svcCell + '</td><td class="num">' + rateCell + '</td><td class="num">' + chip(L, billedFor(L)) + '</td><td>'
-        + sel(i, 'start', L.start, X.months, 'st', 'Start month for ' + who) + '</td><td class="num">' + wkCell + '</td><td class="num">' + moCell + '</td><td class="num">' + hrsCell + '</td><td class="num">' + dolCell + '</td><td class="num dim" data-mo="' + i + '">' + fmt(dol / mo) + '</td>'
+        + sel(i, 'st', L.start, X.months, 'st', 'Start month for ' + who) + '</td><td class="num">' + wkCell + '</td><td class="num">' + moCell + '</td><td class="num">' + hrsCell + '</td><td class="num">' + dolCell + '</td><td class="num dim" data-mo="' + i + '">' + fmt(dol / mo) + '</td>'
         + '<td style="white-space:nowrap"><button class="btn fill" data-fill="' + i + '" type="button" title="Fill: set this line so its code ends at $0" aria-label="Fill ' + esc(who) + ' to what is left in SC-' + esc(L.code) + '">⤓</button> '
         + '<button class="btn x" data-del="' + i + '" type="button" title="Remove this line" aria-label="Remove ' + esc(who) + '">✕</button></td>';
       tb.appendChild(tr);
@@ -406,7 +319,7 @@
         + '<div class="e"><span class="k">Budget</span><span class="v">' + fmt(a) + '</span></div>'
         + '<div class="e"><span class="k">Proposal total</span><span class="v">' + fmt(prop(c)) + '</span></div>'
         + '<div class="e"><span class="k">Billed so far</span><span class="v">' + fmt(X.committedBy[c] || 0) + '</span></div>'
-        + '<div class="e head' + (over ? ' over' : '') + '"><span class="k">' + (over ? 'Over budget' : 'Headroom') + '</span><span class="v">' + fmt(Math.abs(h)) + '</span></div>'
+        + '<div class="e head' + (over ? ' over' : '') + '"><span class="k">' + (over ? 'Over budget' : 'Headroom') + '</span><span class="v" data-head="' + esc(c) + '">' + fmt(h) + '</span></div>'
         + (rate ? '<div class="hrs">= ' + (h / rate).toFixed(1) + ' hr · <b>' + (h / rate / X.weeksLeft).toFixed(1) + ' hr/wk</b> from today at $' + rate.toFixed(2) + ' · ' + (h / rate / remMonths).toFixed(1) + ' hr/mo</div>' : '<div class="hrs">no hourly line in this code</div>')
         + '<div class="bar' + (over ? ' over' : '') + '" role="img" aria-label="Proposal uses ' + (a ? prop(c) / a * 100 : 0).toFixed(0) + '% of the SC-' + esc(c) + ' budget"><b style="width:' + Math.min(100, a ? prop(c) / a * 100 : 0) + '%"></b><i style="left:' + (X.monthsElapsed / X.months.length * 100) + '%"></i></div>';
       res.appendChild(pot);
@@ -460,25 +373,32 @@
     if (k === 'hrs') L.hours = Math.max(0, +v || 0);
     else if (k === 'wk') L.hours = Math.max(0, +v || 0) * weeksFrom(L.start);
     else if (k === 'mo') L.hours = Math.max(0, +v || 0) * monthsFrom(L.start);
-    else if (k === 'dol') L.hours = L.rate ? num(v) / L.rate : 0;
-    else if (k === 'dolfixed') { L.rate = num(v); L.hours = 1; }
+    else if (k === 'dol') { if (L.fixed) { L.rate = num(v); L.hours = 1; } else L.hours = L.rate ? num(v) / L.rate : 0; }
     else if (k === 'rate') { L.rate = Math.max(0, +v || 0); if (L.pendingDollars && L.rate > 0) { L.hours = L.pendingDollars / L.rate; delete L.pendingDollars; } }
-    else if (k === 'provider') { L.provider = v; t.title = v; }
+    else if (k === 't') { L.provider = v; t.title = v; }
     else return;
     syncRow(t.closest('tr'), L); rollup(); save();
   });
   $('calcBody').addEventListener('focusout', function (e) {
     var t = e.target, k = t.dataset && t.dataset.k, L = t.dataset && lines[+t.dataset.i]; if (!L) return;
-    if (k === 'dol' || k === 'dolfixed') t.value = money(yr(L));
-    if (k === 'provider') { var c = t.closest('tr').querySelector('.chip'); if (c) c.outerHTML = chip(L, billedFor(L)); }
+    if (k === 'dol') t.value = money(yr(L));
+    if (k === 't') { var c = t.closest('tr').querySelector('.chip'); if (c) c.outerHTML = chip(L, billedFor(L)); }
   });
   $('calcBody').addEventListener('change', function (e) {
     var t = e.target, L = lines[+t.dataset.i], k = t.dataset.k; if (!L) return;
-    if (k === 'code') { L.code = t.value; }
-    else if (k === 'start') { var wk0 = L.hours / weeksFrom(L.start); L.start = t.value; if (!L.fixed) L.hours = wk0 * weeksFrom(L.start); } // keep hr/wk
-    else if (k === 'service') {
+    if (k === 'convrate') {
+      var cr = num(t.value); if (!cr) return;
+      snap(); var amt0 = yr(L); L.fixed = false; L.rate = cr; L.hours = amt0 / cr; if (!L.service || L.service === 'fixed') L.service = 'hourly';
+      if (!(L.service in X.rateBySvc)) X.rateBySvc[L.service] = cr;
+      render(); save(); $('saveStatus').textContent = (L.provider || 'line') + ': ' + fmt(amt0) + ' at $' + cr.toFixed(2) + '/hr = ' + L.hours.toFixed(1) + ' hr/yr';
+      var rr = $('calcBody').children[+t.dataset.i], ri = rr && rr.querySelector('[data-k="wk"]'); if (ri) { refocusing = true; ri.focus(); refocusing = false; }
+      return;
+    }
+    if (k === 'c') { L.code = t.value; }
+    else if (k === 'st') { var wk0 = L.hours / weeksFrom(L.start); L.start = t.value; if (!L.fixed) L.hours = wk0 * weeksFrom(L.start); } // keep hr/wk
+    else if (k === 'svc') {
       var v = t.value, amt = yr(L);
-      if (v === 'fixed') { L.fixed = true; L.service = 'fixed'; L.rate = L.pendingDollars || amt; L.hours = 1; delete L.pendingDollars; }
+      if (v === 'fixed') { L.fixed = true; L.rate = L.pendingDollars || amt; L.hours = 1; delete L.pendingDollars; }
       else {
         var was = L.fixed; L.fixed = false; L.service = v; L.rate = X.rateBySvc[v] || (was ? 0 : L.rate);
         // Never guess a rate (SPEC rule 3): with none known, hold the dollars until the user types one.
@@ -577,14 +497,14 @@
 
   /* ------------------------------------------------------------------ events: onboarding */
   var drop = $('drop');
-  drop.addEventListener('click', function () { $('fileIn').click(); });
-  drop.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('fileIn').click(); } });
+  drop.addEventListener('click', function () { $('fileInput').click(); });
+  drop.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('fileInput').click(); } });
   ['dragenter', 'dragover'].forEach(function (t) { drop.addEventListener(t, function (e) { e.preventDefault(); drop.classList.add('over'); }); });
   ['dragleave', 'drop'].forEach(function (t) { drop.addEventListener(t, function (e) { e.preventDefault(); drop.classList.remove('over'); }); });
   drop.addEventListener('drop', function (e) { handleFiles(e.dataTransfer && e.dataTransfer.files); });
   window.addEventListener('dragover', function (e) { e.preventDefault(); }); // a missed drop must not navigate away
   window.addEventListener('drop', function (e) { e.preventDefault(); });
-  $('fileIn').addEventListener('change', function (e) { handleFiles(e.target.files); e.target.value = ''; });
+  $('fileInput').addEventListener('change', function (e) { handleFiles(e.target.files); e.target.value = ''; });
   $('openBtn').addEventListener('click', function () {
     var p = pending.plan; if (!p) return;
     var r = pending.report;
@@ -594,6 +514,9 @@
   $('demoBtn').addEventListener('click', function () {
     var d = SDP.demo; start({ source: 'demo', plan: clone(d.plan), report: clone(d.report), files: [] }, true);
   });
+
+  /* ------------------------------------------------------------------ automation hook (read-only snapshot) */
+  SDP.app = { state: function () { return X ? clone({ lines: lines, auth: auth }) : null; } };
 
   /* ------------------------------------------------------------------ boot */
   var saved = fetchKey(KEY);

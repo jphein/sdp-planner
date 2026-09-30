@@ -21,15 +21,15 @@ function planWorkbook() {
     [_, _, '316 - FMS Co-Employer, $800/Month, Vendor #:ZZ0000'],
     [],
     [_, _, "Participant's Name:", _, 'UCI #', _, 'DOB', 'Service Coordinator', _, 'Provider Count', 'SP Start Date', 'SP End Date', 'Spending Plan Total', _, 'DATE PREPARED'],
-    [_, _, 'Riley Sample', _, 0, _, '01/01/2000', 'Pat Example', _, 6, '09/01/2026', '08/31/2027', 56320, _, '07/01/2026'],
+    [_, _, 'Riley Sample', _, 0, _, '01/01/2000', 'Pat Example', _, 6, '09/01/2026', '08/31/2027', 55420, _, '07/01/2026'],
     [],
     hdr,
     [],
     [_, _, 'Living Arrangement (310-321)'],
     [_, _, 316, 'FMS Co-Employer (11+ EN)', 'Example FMS ZZ0000', 0, 0, 12, 'Month/Year', 1, 0, 800, 800, 0, 0],
-    L(320, 'Personal Attendent supports', 'Alex Rivera or Sam Okafor', 50, 'Hour/Month', 12, 600, 35.00, 21900),
+    L(320, 'Personal Attendent supports', 'Alex Rivera or Sam Okafor', 50, 'Hour/Month', 12, 600, 35, 21000),
     L(320, 'ILS', 'Sam Okafor', 10, 'Hour/Month', 12, 120, 50, 6000),
-    [_, _, _, _, _, _, _, _, _, _, 'Living Arrangement  Total', _, _, _, 27900],
+    [_, _, _, _, _, _, _, _, _, _, 'Living Arrangement  Total', _, _, _, 27000],
     [_, _, 'Employment & Community Participation (331-340)'],
     L(331, 'Community Integration Supports - TDS', 'Jordan Lee or Morgan Blake', 52, 'Week/Year', 1, 52, 200, 10400),
     L(331, 'Community Integration Supports - TDS', 'Priya Natarajan', 26, 'Week/Year', 1, 26, 200, 5200),
@@ -41,19 +41,19 @@ function planWorkbook() {
     [_, _, 'Health & Safety (356-377)'],
     L(358, 'Medical Alert Annual Membership', 'Example Alert', 1, 'Year/Year', 1, 1, 60, 60),
     [_, _, _, _, _, _, _, _, _, _, 'Health & Safety  Total', _, _, _, 60],
-    [_, _, _, _, _, _, _, _, _, _, 'Spending Plan Total', _, _, _, 52620],
+    [_, _, _, _, _, _, _, _, _, _, 'Spending Plan Total', _, _, _, 51720],
     [],
-    [_, _, 'Total Certified Budget Amount', _, 56320],
-    [_, _, 'Total Spending Plan Amount', _, 56320, _, _, _, 'Participant Signature', _, _, _, _, 'Date'],
+    [_, _, 'Total Certified Budget Amount', _, 55420],
+    [_, _, 'Total Spending Plan Amount', _, 55420, _, _, _, 'Participant Signature', _, _, _, _, 'Date'],
     [],
     [_, _, 'SDP Authorizations'],
     [_, _, 'Living Arrangement (310-321)', _, 'Employment & Community Participation (331-340)', _, _, _, _, _, _, 'Health & Safety (356-377)'],
     // 331 auth deliberately differs from its line sum (an amended plan) to prove auth comes from this block.
-    [_, _, 320, 27900, 331, _, 22620, _, _, _, _, 358, 60],
+    [_, _, 320, 27000, 331, _, 22620, _, _, _, _, 358, 60],
     [_, _, _, _, 338, _, 340],   // 338's authorization is $340 — a code-shaped amount must not be read as a code
     [_, _, _, _, 340, _, 5400],
-    [_, _, ' Total', 27900, ' Total', _, 28360, _, _, _, _, ' Total', 60],
-    [_, _, 'SDP Authorization Total:', _, _, _, _, _, 56320],
+    [_, _, ' Total', 27000, ' Total', _, 28360, _, _, _, _, ' Total', 60],
+    [_, _, 'SDP Authorization Total:', _, _, _, _, _, 55420],
     [],
     [_, _, 'FMS & FTS Authorizations'],
     [_, _, '316 - FMS', 'FMS Co-Employer (11+ EN) $800 (12 Month x $800 )', _, 9600]
@@ -63,9 +63,9 @@ function planWorkbook() {
 
 // Report rows per code: [date, type, provider, description, spent, alloc, invoice]
 const REPORT_ROWS = {
-  320: [['09/01/2026', 'Service', 'Alex Rivera', 'Personal attendant support', 1825, 0, 'INV-1'],
+  320: [['09/01/2026', 'Service', 'Alex Rivera', 'Personal attendant support', 1750, 0, 'INV-1'],
         ['09/08/2026', 'Service', 'Sam Okafor', 'Independent living skills', 250, 0, 'INV-2'],
-        ['10/01/2026', 'Service', 'Alex Rivera', 'Personal attendant support', 0, 1752, 'INV-3']],
+        ['10/01/2026', 'Service', 'Alex Rivera', 'Personal attendant support', 0, 1680, 'INV-3']],
   331: [['09/01/2026', 'Goods Purchase', 'Example Climbing Gym', 'Monthly membership', 240, 0, 'INV-4'],
         ['09/03/2026', 'Service', 'Jordan Lee', 'Community outing', 190, 0, 'INV-2'],
         ['09/10/2026', 'Service', 'Jordan Lee', 'Community outing', 190, 0, 'INV-2'],
@@ -76,7 +76,7 @@ const REPORT_ROWS = {
   358: []
 };
 const NAMES = { 320: 'Community Living Supports', 331: 'Community Integration Supports', 338: 'Non-Medical Transportation', 340: 'Independent Facilitator', 358: 'Personal Emergency Response Systems (PERS) ' };
-const AUTH = { 320: 27900, 331: 22620, 338: 340, 340: 5400, 358: 60 };
+const AUTH = { 320: 27000, 331: 22620, 338: 340, 340: 5400, 358: 60 };
 const CATEGORY = { 320: 'Living Arrangement (310-321)', 331: 'Employment & Community Participation (331-340)', 338: 'Employment & Community Participation (331-340)', 340: 'Employment & Community Participation (331-340)', 358: 'Health & Safety (356-377)' };
 
 function reportWorkbook({ tamperSvc = false, dateSerials = false } = {}) {

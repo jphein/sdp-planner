@@ -17,13 +17,14 @@ test('fixture plan matches expected.json', { skip: !have && 'tests/fixtures not 
   assert.equal(kind, 'ace-plan');
   assert.deepEqual(p.planYear, E.plan.planYear);
   assert.deepEqual(p.participant, E.plan.participant);
-  assert.equal(p.fms.vendorNumber, E.plan.fms.vendorNumber);
+  for (const k of Object.keys(E.plan.fms)) if (k !== 'name') assert.equal(p.fms[k], E.plan.fms[k], 'fms.' + k); // no FMS-name cell in ACE plans
   assert.deepEqual(Object.fromEntries(Object.entries(p.codes).map(([c, v]) => [c, v.auth])), E.plan.codes);
   assert.equal(p.total, E.plan.total);
   assert.equal(p.lines.length, E.plan.lineCount);
-  // expected.json's `unit` is the raw TYPE OF UNITS cell, which the parser keeps as `unitType`.
-  assert.deepEqual(p.lines.map(L => ({ code: L.code, description: L.description, providers: L.providers, unitsPerYear: L.unitsPerYear,
-    unit: L.unitType, rate: L.rate, yearly: L.yearly })), E.plan.lines);
+  // Compare exactly the fields expected.json lists. Older fixtures named the raw TYPE OF UNITS cell `unit`;
+  // the parser (and current fixtures) call it `unitType` — accept either spelling.
+  const pick = (L, e) => Object.fromEntries(Object.keys(e).map(k => [k, k === 'unit' ? L.unitType : L[k]]));
+  assert.deepEqual(p.lines.map((L, i) => pick(L, E.plan.lines[i] || {})), E.plan.lines);
 });
 
 test('fixture report matches expected.json and self-reconciles', { skip: !have && 'tests/fixtures not present' }, () => {

@@ -42,7 +42,7 @@ test('buildProposal: hourly lines from the RATE column, weekly lines stay fixed 
   const lines = M.buildProposal(plan);
   assert.equal(lines.length, plan.lines.length);
   const pa = lines[0];
-  assert.deepEqual([pa.provider, pa.code, pa.service, pa.rate, pa.hours, pa.start, pa.fixed], ['Alex Rivera', '320', 'PA', 35.00, 600, '2026-09', false]);
+  assert.deepEqual([pa.provider, pa.code, pa.service, pa.rate, pa.hours, pa.start, pa.fixed], ['Alex Rivera', '320', 'PA', 35, 600, '2026-09', false]);
   assert.deepEqual(pa.alternates, ['Sam Okafor']);
   const tds = lines.filter(L => L.service === 'TDS');
   assert.ok(tds.every(L => L.fixed), 'no hourly rate is inferred from $200/wk');
@@ -50,7 +50,7 @@ test('buildProposal: hourly lines from the RATE column, weekly lines stay fixed 
   assert.equal(new Set(lines.map(L => L.id)).size, lines.length, 'ids are unique');
   // Default proposal = plan lines, so every code's proposal equals its line sum.
   const f = M.forecast(lines, plan);
-  assert.equal(f.byCode['320'].proposal, 27900);
+  assert.equal(f.byCode['320'].proposal, 27000);
   assert.equal(f.byCode['331'].proposal, 18960);
 });
 
@@ -69,10 +69,10 @@ test('buildProposal: last year basis uses last year $ ÷ last year rate, only wh
   const plan = parsers.ace.plan(planWorkbook());
   const lastYear = parsers.ace.report(reportWorkbook());
   const plain = M.buildProposal(plan, lastYear);
-  assert.equal(plain[0].lastYear, 3577, 'Alex Rivera 320: 1825 spent + 1752 allocated');
+  assert.equal(plain[0].lastYear, 3430, 'Alex Rivera 320: 1750 spent + 1680 allocated');
   assert.equal(plain[0].hours, 600, 'without basis:lastYear hours stay from the plan');
-  const ly = M.buildProposal(plan, lastYear, { basis: 'lastYear', lastYearRates: { '320:PA': 35 } });
-  assert.equal(ly[0].hours, 3577 / 35);
+  const ly = M.buildProposal(plan, lastYear, { basis: 'lastYear', lastYearRates: { '320:PA': 34 } });
+  assert.equal(ly[0].hours, 3430 / 34, 'last year $ ÷ last year rate, not this year rate');
   assert.equal(ly[1].hours, 120, 'ILS has no last-year rate → plan hours kept');
   // Prefix match: plan "Example Climbing" ↔ report "Example Climbing Gym".
   assert.equal(plain.find(L => L.provider === 'Example Climbing').lastYear, 240);
@@ -135,14 +135,14 @@ test('pace: committed vs straight-line expected, by code', () => {
   assert.equal(p.monthsElapsed, 2);
   assert.equal(p.months, 12);
   const c = p.byCode['320'];
-  assert.equal(c.auth, 27900);
-  assert.equal(c.spent, 2075);
-  assert.equal(c.alloc, 1752);
-  assert.equal(c.committed, 3827);
-  assert.equal(c.available, 27900 - 3827);
-  assert.equal(c.expected, 4650);
-  assert.equal(c.diff, 3827 - 4650);
-  assert.ok(Math.abs(c.pct - 3827 / 27900 * 100) < 1e-9);
+  assert.equal(c.auth, 27000);
+  assert.equal(c.spent, 2000);
+  assert.equal(c.alloc, 1680);
+  assert.equal(c.committed, 3680);
+  assert.equal(c.available, 27000 - 3680);
+  assert.equal(c.expected, 4500);
+  assert.equal(c.diff, 3680 - 4500);
+  assert.ok(Math.abs(c.pct - 3680 / 27000 * 100) < 1e-9);
   assert.equal(p.byCode['340'].committed, 0);
   assert.equal(p.byCode['340'].diff, -900);
   // Default asOf = the report's last service date.
@@ -158,6 +158,6 @@ test('billed + monthGrid: by provider and SERVICE month', () => {
   const g = M.monthGrid(report, plan);
   assert.equal(g.months.length, 12);
   const alex = g.rows.find(r => r.provider === 'Alex Rivera' && r.code === '320');
-  assert.deepEqual(alex.byMonth, { '2026-09': 1825, '2026-10': 1752 });
-  assert.equal(alex.total, 3577);
+  assert.deepEqual(alex.byMonth, { '2026-09': 1750, '2026-10': 1680 });
+  assert.equal(alex.total, 3430);
 });

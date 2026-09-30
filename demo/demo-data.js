@@ -69,8 +69,8 @@
   var R = [];
   function add(d, type, prov, code, desc, spent, alloc, inv) { R.push([d, type, prov, code, desc, spent, alloc || 0, inv]); }
   // Monthly invoices post under the 1st of the month served.
-  add('07/01/2026', 'Service', 'Alex Rivera', '320', 'Personal attendant support', cents(76 * 35.00), 0, 'DEMO-1001');
-  add('08/01/2026', 'Service', 'Alex Rivera', '320', 'Personal attendant support', cents(84 * 35.00), 0, 'DEMO-1014');
+  add('07/01/2026', 'Service', 'Alex Rivera', '320', 'Personal attendant support', cents(76 * 35), 0, 'DEMO-1001');
+  add('08/01/2026', 'Service', 'Alex Rivera', '320', 'Personal attendant support', cents(84 * 35), 0, 'DEMO-1014');
   // Weekly timesheets.
   ['07/06', '07/13', '07/20', '07/27', '08/03', '08/10', '08/17', '08/24', '08/31'].forEach(function (md, i) {
     var inv = i < 4 ? 'DEMO-1002' : 'DEMO-1015';

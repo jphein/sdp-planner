@@ -25,7 +25,7 @@ test('plan: header, participant, FMS, plan year', () => {
   assert.equal(p.fms.monthlyFee, 800);
   assert.equal(p.fms.vendorNumber, 'ZZ0000');
   assert.equal(p.fms.model, 'Co-Employer');
-  assert.equal(p.total, 56320);
+  assert.equal(p.total, 55420);
 });
 
 test('plan: lines keep the RATE column verbatim and skip the FMS line', () => {
@@ -33,7 +33,7 @@ test('plan: lines keep the RATE column verbatim and skip the FMS line', () => {
   assert.equal(p.lines.length, 9);
   assert.ok(!p.lines.some(L => L.code === '316'), 'FMS fee is outside the SDP budget');
   const pa = p.lines[0];
-  assert.deepEqual([pa.code, pa.unit, pa.unitsPerYear, pa.rate, pa.yearly], ['320', 'hour', 600, 35.00, 21900]);
+  assert.deepEqual([pa.code, pa.unit, pa.unitsPerYear, pa.rate, pa.yearly], ['320', 'hour', 600, 35, 21000]);
   assert.deepEqual(pa.providers, ['Alex Rivera', 'Sam Okafor']);
   const tds = p.lines.find(L => L.code === '331' && L.unit === 'week');
   assert.equal(tds.rate, 200, 'weekly budget line rate is the plan RATE ($/wk), not an hourly rate');
@@ -44,10 +44,10 @@ test('plan: lines keep the RATE column verbatim and skip the FMS line', () => {
 test('plan: authorizations come from the SDP Authorizations block, by code', () => {
   const p = parsers.ace.plan(planWorkbook());
   const auth = Object.fromEntries(Object.entries(p.codes).map(([c, v]) => [c, v.auth]));
-  assert.deepEqual(auth, { 320: 27900, 331: 22620, 338: 340, 340: 5400, 358: 60 });
+  assert.deepEqual(auth, { 320: 27000, 331: 22620, 338: 340, 340: 5400, 358: 60 });
   assert.equal(p.checks.authFromSheet, true);
-  assert.equal(p.checks.linesTotal, 52620);
-  assert.equal(p.checks.authTotal, 56320);
+  assert.equal(p.checks.linesTotal, 51720);
+  assert.equal(p.checks.authTotal, 55420);
 });
 
 test('report: rows, service dates, codes, invoices', () => {
@@ -59,12 +59,12 @@ test('report: rows, service dates, codes, invoices', () => {
   assert.equal(r.asOf, '2026-10-01');
   const first = r.rows[0];
   assert.deepEqual([first.date, first.month, first.code, first.provider, first.spent, first.invoice],
-    ['09/01/2026', '2026-09', '320', 'Alex Rivera', 1825, 'INV-1']);
+    ['09/01/2026', '2026-09', '320', 'Alex Rivera', 1750, 'INV-1']);
   assert.ok(r.rows.every(x => x.invoice), 'every row gets its invoice # from the copy sheet');
   const refund = r.rows.find(x => x.spent < 0);
   assert.equal(refund.spent, -20, 'negative adjustments are kept');
   const allocated = r.rows.find(x => x.alloc > 0);
-  assert.deepEqual([allocated.code, allocated.alloc, allocated.spent], ['320', 1752, 0]);
+  assert.deepEqual([allocated.code, allocated.alloc, allocated.spent], ['320', 1680, 0]);
 });
 
 test('report: byCode/byProvider reconcile with SVC + Provider Report', () => {
@@ -73,7 +73,7 @@ test('report: byCode/byProvider reconcile with SVC + Provider Report', () => {
   assert.equal(r.checks.crossChecked, true);
   assert.deepEqual(r.byCode['331'], { spent: 752.5, alloc: 0, available: AUTH[331] - 752.5, start: AUTH[331], name: 'Community Integration Supports' });
   assert.equal(r.byCode['340'].available, 5400);
-  assert.equal(r.byProvider['Alex Rivera'], 1825 + 1752);
+  assert.equal(r.byProvider['Alex Rivera'], 1750 + 1680);
   assert.equal(r.byProvider['Priya Natarajan'], 132.5);
 });
 

@@ -95,6 +95,10 @@ try {
     for (const [p, s] of Object.entries(E.report.byProvider)) assert(near(R.byProvider?.[p], s), `provider ${p} ${R.byProvider?.[p]} ≠ ${s}`);
     const sum = rows.reduce((a, r) => a + Number(r.spent), 0); assert(near(sum, E.report.spentTotal), `rows sum ${sum} ≠ ${E.report.spentTotal}`);
   });
+  await check('report: ledger ties to its own SVC + Provider sheets (checks.ok)', () => {
+    assert(R?.checks, 'no data.checks from the parser');
+    assert(R.checks.ok === true, `checks.ok=${R.checks.ok} mismatches ${JSON.stringify(R.checks.mismatches)}`);
+  });
   await check('report: swapped-code invoice kept under its BOOKED codes', () => {
     const sw = E.report.swappedInvoice;
     const lines = (R?.rows || []).filter(r => String(r.invoice ?? '') === sw.invoice);

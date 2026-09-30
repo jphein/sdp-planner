@@ -218,9 +218,9 @@ const expected = {
   plan: {
     planYear: { start: '2026-09-01', end: '2027-08-31' },
     participant: { name: PLAN.participant, uci: PLAN.uci },
-    fms: { name: PLAN.fms.name, vendorNumber: PLAN.fms.vendor },
+    fms: { vendorNumber: PLAN.fms.vendor }, // the workbook carries no separate FMS name cell
     codes: auth, total: planTotal, lineCount: planLines.length,
-    lines: planLines.map(({ code, description, providers, unitsPerYear, unit, rate, yearly }) => ({ code, description, providers, unitsPerYear, unit, rate, yearly })),
+    lines: planLines.map(({ code, description, providers, unitsPerYear, unit, rate, yearly }) => ({ code, description, providers, unitsPerYear, unitType: unit, rate, yearly })), // unitType = raw 'TYPE OF UNITS' cell
   },
   report: {
     latestServiceDate: AS_OF, rowCount: TX.length, spentTotal, byCode, byProvider,

@@ -10,7 +10,6 @@
       "uci": "0000000"
     },
     "fms": {
-      "name": "ACE FMS",
       "vendorNumber": "ZZ0000"
     },
     "codes": {
@@ -31,7 +30,7 @@
           "Casey Park"
         ],
         "unitsPerYear": 600,
-        "unit": "Hour/Month",
+        "unitType": "Hour/Month",
         "rate": 30,
         "yearly": 18000
       },
@@ -43,7 +42,7 @@
           "Sam Jordan"
         ],
         "unitsPerYear": 240,
-        "unit": "Hour/Month",
+        "unitType": "Hour/Month",
         "rate": 50,
         "yearly": 12000
       },
@@ -55,7 +54,7 @@
           "Riley Chen"
         ],
         "unitsPerYear": 52,
-        "unit": "Week/Year",
+        "unitType": "Week/Year",
         "rate": 200,
         "yearly": 10400
       },
@@ -67,7 +66,7 @@
           "Jamie Fox"
         ],
         "unitsPerYear": 26,
-        "unit": "Week/Year",
+        "unitType": "Week/Year",
         "rate": 200,
         "yearly": 5200
       },
@@ -78,7 +77,7 @@
           "Example Transit"
         ],
         "unitsPerYear": 12,
-        "unit": "Month/Year",
+        "unitType": "Month/Year",
         "rate": 25,
         "yearly": 300
       },
@@ -89,7 +88,7 @@
           "Example Facilitation LLC"
         ],
         "unitsPerYear": 12,
-        "unit": "Month/Year",
+        "unitType": "Month/Year",
         "rate": 500,
         "yearly": 6000
       },
@@ -100,7 +99,7 @@
           "Example Climbing Gym"
         ],
         "unitsPerYear": 12,
-        "unit": "Month/Year",
+        "unitType": "Month/Year",
         "rate": 100,
         "yearly": 1200
       },
@@ -111,7 +110,7 @@
           "Example Alert Co"
         ],
         "unitsPerYear": 1,
-        "unit": "Year/Year",
+        "unitType": "Year/Year",
         "rate": 50,
         "yearly": 50
       }

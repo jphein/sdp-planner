@@ -1,0 +1,12 @@
+{
+  "name": "sdp-planner",
+  "private": true,
+  "description": "Browser-only SDP spending-plan tracker. No dependencies: SheetJS is vendored in vendor/.",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test 'tests/unit/*.test.js'",
+    "fixtures": "node scripts/make-fixtures.mjs",
+    "smoke": "node scripts/cdp-smoke.mjs",
+    "a11y": "node scripts/a11y-check.mjs"
+  }
+}

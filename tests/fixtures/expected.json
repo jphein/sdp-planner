@@ -1,0 +1,173 @@
+{
+  "_note": "Synthetic. Values a correct ACE parser must recover from ace-plan.xlsx / ace-report.xlsx.",
+  "plan": {
+    "planYear": {
+      "start": "2026-09-01",
+      "end": "2027-08-31"
+    },
+    "participant": {
+      "name": "Alex Rivera",
+      "uci": "0000000"
+    },
+    "fms": {
+      "name": "ACE FMS",
+      "vendorNumber": "ZZ0000"
+    },
+    "codes": {
+      "320": 30000,
+      "331": 16800,
+      "338": 300,
+      "340": 6000,
+      "358": 50
+    },
+    "total": 53150,
+    "lineCount": 8,
+    "lines": [
+      {
+        "code": "320",
+        "description": "Personal Attendant supports",
+        "providers": [
+          "Sam Jordan",
+          "Casey Park"
+        ],
+        "unitsPerYear": 600,
+        "unit": "Hour/Month",
+        "rate": 30,
+        "yearly": 18000
+      },
+      {
+        "code": "320",
+        "description": "ILS",
+        "providers": [
+          "Morgan Lee",
+          "Sam Jordan"
+        ],
+        "unitsPerYear": 240,
+        "unit": "Hour/Month",
+        "rate": 50,
+        "yearly": 12000
+      },
+      {
+        "code": "331",
+        "description": "Community Integration Supports",
+        "providers": [
+          "Casey Park",
+          "Riley Chen"
+        ],
+        "unitsPerYear": 52,
+        "unit": "Week/Year",
+        "rate": 200,
+        "yearly": 10400
+      },
+      {
+        "code": "331",
+        "description": "Community Integration Supports",
+        "providers": [
+          "Taylor Quinn",
+          "Jamie Fox"
+        ],
+        "unitsPerYear": 26,
+        "unit": "Week/Year",
+        "rate": 200,
+        "yearly": 5200
+      },
+      {
+        "code": "338",
+        "description": "Non-Medical Transportation",
+        "providers": [
+          "Example Transit"
+        ],
+        "unitsPerYear": 12,
+        "unit": "Month/Year",
+        "rate": 25,
+        "yearly": 300
+      },
+      {
+        "code": "340",
+        "description": "Independent Facilitator",
+        "providers": [
+          "Example Facilitation LLC"
+        ],
+        "unitsPerYear": 12,
+        "unit": "Month/Year",
+        "rate": 500,
+        "yearly": 6000
+      },
+      {
+        "code": "331",
+        "description": "Example Climbing Gym Membership",
+        "providers": [
+          "Example Climbing Gym"
+        ],
+        "unitsPerYear": 12,
+        "unit": "Month/Year",
+        "rate": 100,
+        "yearly": 1200
+      },
+      {
+        "code": "358",
+        "description": "Example Alert Annual Membership",
+        "providers": [
+          "Example Alert Co"
+        ],
+        "unitsPerYear": 1,
+        "unit": "Year/Year",
+        "rate": 50,
+        "yearly": 50
+      }
+    ]
+  },
+  "report": {
+    "latestServiceDate": "10/01/2026",
+    "rowCount": 11,
+    "spentTotal": 4125,
+    "byCode": {
+      "320": {
+        "spent": 2400,
+        "alloc": 0,
+        "available": 27600
+      },
+      "331": {
+        "spent": 1200,
+        "alloc": 0,
+        "available": 15600
+      },
+      "338": {
+        "spent": 25,
+        "alloc": 0,
+        "available": 275
+      },
+      "340": {
+        "spent": 500,
+        "alloc": 0,
+        "available": 5500
+      },
+      "358": {
+        "spent": 0,
+        "alloc": 0,
+        "available": 50
+      }
+    },
+    "byProvider": {
+      "Sam Jordan": 1500,
+      "Morgan Lee": 500,
+      "Casey Park": 1400,
+      "Example Climbing Gym": 200,
+      "Example Transit": 25,
+      "Example Facilitation LLC": 500
+    },
+    "swappedInvoice": {
+      "invoice": "9000002",
+      "lines": [
+        {
+          "code": "320",
+          "spent": 400
+        },
+        {
+          "code": "331",
+          "spent": 600
+        }
+      ]
+    }
+  }
+}
